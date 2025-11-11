@@ -11,16 +11,54 @@ Model name is converted to lowercase for the collection name:
 - BlogPost -> "blogs" collection
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
+from datetime import date, datetime
 
-# Example schemas (replace with your own):
+# Core school information system schemas
 
+class Student(BaseModel):
+    first_name: str = Field(..., description="First name")
+    last_name: str = Field(..., description="Last name")
+    email: EmailStr = Field(..., description="Student email")
+    grade_level: Optional[int] = Field(None, ge=1, le=12, description="Grade 1-12")
+    enrollment_date: Optional[date] = Field(None, description="Enrollment date")
+    guardian_name: Optional[str] = None
+    guardian_phone: Optional[str] = None
+    is_active: bool = True
+
+class Teacher(BaseModel):
+    first_name: str
+    last_name: str
+    email: EmailStr
+    department: Optional[str] = None
+    phone: Optional[str] = None
+    is_active: bool = True
+
+class Course(BaseModel):
+    code: str = Field(..., description="Course code, e.g., MATH101")
+    title: str
+    description: Optional[str] = None
+    teacher_id: Optional[str] = Field(None, description="Reference to teacher _id")
+    credits: Optional[int] = Field(1, ge=0, le=10)
+    grade_levels: Optional[List[int]] = Field(default=None, description="Eligible grade levels")
+
+class Enrollment(BaseModel):
+    student_id: str = Field(..., description="Reference to student _id")
+    course_id: str = Field(..., description="Reference to course _id")
+    status: str = Field("enrolled", description="enrolled, waitlisted, completed, dropped")
+    term: Optional[str] = Field(None, description="e.g., Fall 2025")
+
+class Announcement(BaseModel):
+    title: str
+    body: str
+    audience: str = Field("all", description="all, students, teachers, parents")
+    publish_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    pinned: bool = False
+
+# Example schemas retained (can be used by database viewer)
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
     name: str = Field(..., description="Full name")
     email: str = Field(..., description="Email address")
     address: str = Field(..., description="Address")
@@ -28,18 +66,11 @@ class User(BaseModel):
     is_active: bool = Field(True, description="Whether user is active")
 
 class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
     title: str = Field(..., description="Product title")
     description: Optional[str] = Field(None, description="Product description")
     price: float = Field(..., ge=0, description="Price in dollars")
     category: str = Field(..., description="Product category")
     in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
 
 # Note: The Flames database viewer will automatically:
 # 1. Read these schemas from GET /schema endpoint
